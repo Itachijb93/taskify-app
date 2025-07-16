@@ -1,25 +1,30 @@
-pipeline{
+pipeline {
     agent any
-    stages{
-        stage('Clone Repo'){
-            steps{
+
+    stages {
+        stage('Clone Repo') {
+            steps {
                 git 'https://github.com/Itachijb93/taskify-app.git'
             }
         }
-        stage('Install & Build'){
-            steps{
+
+        stage('Install & Build') {
+            steps {
                 sh 'npm install'
                 sh 'npm run build'
             }
         }
-        stage('Build Docker Image'){
-            steps{
-                script{
+
+        stage('Build Docker Image') {
+            steps {
+                script {
                     docker.build("taskify-app")
-                    }
+                }
+            }
         }
-        stage('Deploy To Kubernetes'){
-            steps{
+
+        stage('Deploy to Kubernetes') {
+            steps {
                 sh 'kubectl apply -f k8s/deployment.yaml'
                 sh 'kubectl apply -f k8s/service.yaml'
             }
