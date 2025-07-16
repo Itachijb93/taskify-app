@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskifyapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: taskifyapp
+  template:
+    metadata:
+      labels:
+       app: taskifyapp
+    spec:
+      containers:
+      - name: taskifyapp
+        image: taskifyapp:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+
+    
