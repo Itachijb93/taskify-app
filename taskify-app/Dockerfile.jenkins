@@ -1,0 +1,16 @@
+# Dockerfile.jenkins
+FROM jenkins/jenkins:lts
+
+USER root
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    docker.io \
+    nodejs \
+    npm \
+    git
+
+# Add Jenkins to Docker group
+RUN usermod -aG docker jenkins
+
+USER jenkins
