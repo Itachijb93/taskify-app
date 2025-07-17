@@ -1,20 +1,12 @@
-# Build stage
+#Build react app
 FROM node:18 AS build
-
 WORKDIR /app
-
-# Copy app source code
 COPY . .
+RUN npm install
+RUN npm run build
 
-# Install dependencies and build the app
-RUN npm install && npm run build
-
-# Serve stage
+#Serve react app using nginx
 FROM nginx:alpine
-
-# Copy built React app to NGINX
 COPY --from=build /app/build /usr/share/nginx/html
-
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
