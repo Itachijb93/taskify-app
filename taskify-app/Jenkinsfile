@@ -1,19 +1,18 @@
- pipeline {
-    agent {
-        docker {
-            image 'node:18'
-            args '-u root' // Optional: allows package installs if needed
-        }
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'taskify-react'
     }
 
     stages {
-        stage('Clone Repo') {
+        stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/Itachijb93/taskify-app.git'
             }
         }
 
-        stage('Install & Build') {
+        stage('Build React App') {
             steps {
                 sh 'npm install'
                 sh 'npm run build'
@@ -22,19 +21,14 @@
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("taskify-app")
-                }
+                sh 'docker build -f Dockerfile.react -t taskify-react .'
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Run Docker Container') {
             steps {
-                sh 'kubectl apply -f k8s/deployment.yaml'
-                sh 'kubectl apply -f k8s/service.yaml'
+                sh 'docker run -d -p 3000:80 --name react-app taskify-react'
             }
         }
     }
 }
-
-
