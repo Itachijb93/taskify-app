@@ -1,22 +1,27 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:18'
+            args '-u root' // Run as root to allow installing packages if needed
+        }
+    }
 
     environment {
-        IMAGE_NAME = "taskify-react-app"
-        CONTAINER_NAME = "taskify-react-container"
+        IMAGE_NAME = 'taskify-app'
+        DOCKER_TAG = 'latest'
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Clone Repo') {
             steps {
                 git branch: 'main', url: 'https://github.com/Itachijb93/taskify-app.git'
             }
         }
 
-        stage('Install Dependencies and Build React App') {
+        stage('Install & Build React App') {
             steps {
-                sh 'node -v'
-                sh 'npm -v'
+                // Ensure you're in the correct directory
+                sh 'ls -la'
                 sh 'npm install'
                 sh 'npm run build'
             }
@@ -24,26 +29,29 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -f Dockerfile.react -t $IMAGE_NAME .'
+                script {
+                    // Make sure Dockerfile.react exists at repo root or adjust path
+                    sh 'ls -la'
+                    docker.build("${IMAGE_NAME}", '-f Dockerfile.react .')
+                }
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                    docker rm -f $CONTAINER_NAME || true
-                    docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE_NAME
-                '''
+                // Apply Kubernetes manifests from the k8s folder
+                sh 'kubectl apply -f k8s/deployment.yaml'
+                sh 'kubectl apply -f k8s/service.yaml'
             }
         }
     }
 
     post {
-        failure {
-            echo '❌ Build failed! Check logs above.'
-        }
         success {
-            echo '✅ Build and deployment completed successfully!'
+            echo '✅ Deployment successful!'
+        }
+        failure {
+            echo '❌ Something went wrong. Please check the logs above.'
         }
     }
 }
