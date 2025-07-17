@@ -2,32 +2,34 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'taskify-react'
+        DOCKER_IMAGE = "myreactapp"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Itachijb93/taskify-app.git'
+                git 'https://github.com/Itachijb93/taskify-app.git'
             }
         }
 
         stage('Build React App') {
             steps {
-                sh 'npm install'
-                sh 'npm run build'
+                dir('client') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -f Dockerfile.react -t taskify-react .'
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                sh 'docker run -d -p 3000:80 --name react-app taskify-react'
+                sh 'docker run -d -p 80:80 --name reactapp $DOCKER_IMAGE || true'
             }
         }
     }
