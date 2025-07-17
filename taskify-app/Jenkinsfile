@@ -40,15 +40,11 @@ pipeline {
 */
 
 pipeline {
-    agent {
-        docker {
-            image 'node:18'
-            args '-u root' // Required to allow global installs if needed
-        }
-    }
+    agent any
 
     environment {
         IMAGE_NAME = "taskify-app"
+        DOCKER_REGISTRY = "docker.io" // Optional if using Docker Hub
     }
 
     stages {
@@ -68,20 +64,22 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${IMAGE_NAME}")
+                    dockerImage = docker.build("${IMAGE_NAME}")
                 }
             }
         }
 
-        stage('Push Docker Image (Optional)') {
+        stage('Push Docker Image') {
             when {
-                expression { return false } // Set to true if you want to push to DockerHub or local registry
+                expression { return true } // Set to false if you want to skip push
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
-                    sh "docker tag ${IMAGE_NAME} $DOCKER_USER/${IMAGE_NAME}:latest"
-                    sh "docker push $DOCKER_USER/${IMAGE_NAME}:latest"
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin ${DOCKER_REGISTRY}
+                        docker tag ${IMAGE_NAME}:latest $DOCKER_USER/${IMAGE_NAME}:latest
+                        docker push $DOCKER_USER/${IMAGE_NAME}:latest
+                    """
                 }
             }
         }
@@ -96,9 +94,13 @@ pipeline {
 
     post {
         failure {
-            echo "Build failed! Check logs above."
+            echo "❌ Build failed! Please check logs."
+        }
+        success {
+            echo "✅ Build and deployment successful!"
         }
     }
 }
+
 
 
