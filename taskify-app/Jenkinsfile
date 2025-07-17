@@ -1,36 +1,53 @@
-pipeline {
+\pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "myreactapp"
+        IMAGE_NAME = "taskify-react-app"
+        CONTAINER_NAME = "taskify-react-container"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/Itachijb93/taskify-app.git'
             }
         }
 
-        stage('Build React App') {
+        stage('Install Dependencies and Build React App') {
             steps {
-                dir('client') {
-                    sh 'npm install'
-                    sh 'npm run build'
-                }
+                // Ensure Node.js and npm are available in Jenkins environment
+                sh 'node -v'
+                sh 'npm -v'
+                
+                // Install packages and build the app
+                sh 'npm install'
+                sh 'npm run build'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker build -t $IMAGE_NAME .'
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                sh 'docker run -d -p 80:80 --name reactapp $DOCKER_IMAGE || true'
+                // Stop and remove any running container with same name
+                sh '''
+                    docker rm -f $CONTAINER_NAME || true
+                    docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE_NAME
+                '''
             }
+        }
+    }
+
+    post {
+        failure {
+            echo '❌ Build failed! Check logs above.'
+        }
+        success {
+            echo '✅ Build and deployment completed successfully!'
         }
     }
 }
