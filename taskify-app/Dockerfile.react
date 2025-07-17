@@ -1,11 +1,11 @@
-# Build React app
+# ---- Build React app ----
 FROM node:18 AS build
 WORKDIR /app
-COPY client/ . 
+COPY client/ ./  # Copy the client folder contents
 RUN npm install
 RUN npm run build
 
-# Serve React app using nginx
+# ---- Serve React app using Nginx ----
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 80
