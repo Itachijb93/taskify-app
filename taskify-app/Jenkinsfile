@@ -9,7 +9,7 @@
     stages {
         stage('Clone Repo') {
             steps {
-                git branch: 'main', url: 'https://github.com/Itachijb93/taskify-app.git'
+               // git branch: 'main', url: 'https://github.com/Itachijb93/taskify-app.git'
             }
         }
 
