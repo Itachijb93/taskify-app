@@ -1,3 +1,4 @@
+/* 
 pipeline {
     agent {
         docker {
@@ -36,3 +37,68 @@ pipeline {
         }
     }
 }
+*/
+
+pipeline {
+    agent {
+        docker {
+            image 'node:18'
+            args '-u root' // Required to allow global installs if needed
+        }
+    }
+
+    environment {
+        IMAGE_NAME = "taskify-app"
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Itachijb93/taskify-app.git'
+            }
+        }
+
+        stage('Install & Build React App') {
+            steps {
+                sh 'npm install'
+                sh 'npm run build'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${IMAGE_NAME}")
+                }
+            }
+        }
+
+        stage('Push Docker Image (Optional)') {
+            when {
+                expression { return false } // Set to true if you want to push to DockerHub or local registry
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                    sh "docker tag ${IMAGE_NAME} $DOCKER_USER/${IMAGE_NAME}:latest"
+                    sh "docker push $DOCKER_USER/${IMAGE_NAME}:latest"
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh 'kubectl apply -f k8s/deployment.yaml'
+                sh 'kubectl apply -f k8s/service.yaml'
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "Build failed! Check logs above."
+        }
+    }
+}
+
+
