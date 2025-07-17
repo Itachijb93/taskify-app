@@ -1,5 +1,4 @@
-/* 
-pipeline {
+ pipeline {
     agent {
         docker {
             image 'node:18'
@@ -37,9 +36,8 @@ pipeline {
         }
     }
 }
-*/
 
-pipeline {
+/*pipeline {
     agent any
 
     environment {
@@ -101,6 +99,7 @@ pipeline {
         }
     }
 }
+*/
 
 
 
