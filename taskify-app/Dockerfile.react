@@ -1,7 +1,8 @@
 # ---- Build React app ----
 FROM node:18 AS build
+
 WORKDIR /app
-COPY client/ ./  # Copy the client folder contents
+COPY ./ ./             # ✅ Copy everything from root
 RUN npm install
 RUN npm run build
 
