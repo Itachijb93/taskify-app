@@ -4,6 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "taskify-react-app"
         CONTAINER_NAME = "taskify-react-container"
+        BUILD_DIR = "client"
     }
 
     stages {
@@ -15,13 +16,12 @@ pipeline {
 
         stage('Install Dependencies and Build React App') {
             steps {
-                // Ensure Node.js and npm are available in Jenkins environment
-                sh 'node -v'
-                sh 'npm -v'
-                
-                // Install packages and build the app
-                sh 'npm install'
-                sh 'npm run build'
+                dir("${BUILD_DIR}") {
+                    sh 'node -v'
+                    sh 'npm -v'
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
             }
         }
 
@@ -33,7 +33,6 @@ pipeline {
 
         stage('Run Docker Container') {
             steps {
-                // Stop and remove any running container with same name
                 sh '''
                     docker rm -f $CONTAINER_NAME || true
                     docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE_NAME
